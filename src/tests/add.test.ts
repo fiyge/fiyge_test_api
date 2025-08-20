@@ -1,16 +1,22 @@
 // src/add.test.ts
 
 import axios, { AxiosInstance } from 'axios';
+import { z } from 'zod';
 import { FormResponseSchema } from '../schemas/formSchema.ts';
-import {exceptionModelList, modelList} from '../constants.ts';
-import { PostResponseSchema } from "../schemas/postResponseSchema.ts";
-import dayjs from "dayjs";
+import { PostResponseSchema } from '../schemas/postResponseSchema.ts';
+import { exceptionModelList, modelList } from '../constants.ts';
+import dayjs from 'dayjs';
 
 // Utility to recursively extract required fields from form.children
-function getRequiredFormFields(children: any[], requiredFields: { name: string; template?: string }[] = []) {
+function getRequiredFormFields(children: any[], requiredFields: { name: string; template?: string; related_to?: string; permission?: string }[] = []) {
     children.forEach((child: any) => {
         if (child['not_empty'] === '1' && child.name) {
-            requiredFields.push({ name: child.name, template: child.template || 'varchar' });
+            requiredFields.push({
+                name: child.name,
+                template: child.template || 'varchar',
+                // related_to: child.related_to,
+                permission: child.permission,
+            });
         }
         if (Array.isArray(child.children)) {
             getRequiredFormFields(child.children, requiredFields);
@@ -19,43 +25,33 @@ function getRequiredFormFields(children: any[], requiredFields: { name: string; 
     return requiredFields;
 }
 
-// @ts-ignore
-function flattenInfiniteFormChildren(formChildren: { children: any }[]) {
-    // @ts-ignore
-    const flattenedChildren = [];
-    formChildren.forEach((child: any) => {
-        flattenedChildren.push(child);
+// Utility to recursively flatten form.children
+function flattenInfiniteFormChildren(children: any[]): any[] {
+    const flattened: any[] = [];
+    children.forEach((child: any) => {
+        flattened.push(child);
         if (Array.isArray(child.children)) {
-            const newChildren = flattenInfiniteFormChildren(child.children);
-            flattenedChildren.push(...newChildren);
+            flattened.push(...flattenInfiniteFormChildren(child.children));
         }
     });
-    // @ts-ignore
-    // const flattenedChildren = formChildren.flatMap(child => child.children ?? []);
-    // if (flattenedChildren.some(child => Array.isArray(child.children))) {
-    //     const newChildren = flattenInfiniteFormChildren(flattenedChildren);
-    //     flattenedChildren.push(newChildren);
-    //     return flattenedChildren
-    // }
-    // console.log("flattenedChildren", flattenedChildren);
-    // @ts-ignore
-    return flattenedChildren;
+    return flattened;
 }
 
 // Utility to construct POST payload for a model
 function constructPostPayload(getResponse: any, model: string): any {
-    // construct controller and method
-    const methodArr = model.split("/").filter(value => value.length > 0);
+    // Construct controller and method
+    const methodArr = model.split('/').filter((value) => value.length > 0);
     const controller = methodArr[methodArr.length - 1];
-    methodArr.push("add")
-    const method = methodArr.join(".")
+    methodArr.push('add');
+    const method = methodArr.join('.');
+
+    // Extract filter rules
+    const filterRules = getResponse.filterRules || {};
+    // console.log("filterRules: ", JSON.stringify(filterRules, null, 2));
 
     // Extract required fields from notEmptyField
-    const notEmptyFields: string[] | Record<string, any> = getResponse.notEmptyField?.[controller] || {};
-    const requiredFields = Object.keys(notEmptyFields)
-    // @ts-ignore
-    // const requiredFields = Object.keys(notEmptyFields).filter(key => typeof notEmptyFields[key] === "string");
-    // console.log(`requiredFields: ${requiredFields}`)
+    const notEmptyFields = getResponse.notEmptyField?.[controller] || {};
+    const notEmptyFieldKeys = Object.keys(notEmptyFields);
 
     // Extract required fields from nested form.children
     const formChildren = getResponse.form?.children || [];
@@ -67,19 +63,34 @@ function constructPostPayload(getResponse: any, model: string): any {
     // console.log("filteredFormChildrenName", filteredFormChildrenName);
     // console.log("flattenFormChildren", JSON.stringify(flattenFormChildren, null, 2));
 
+    // Extract required fields from filterRules (required or notEmpty)
+    const filterRulesRequiredFields = Object.keys(filterRules).filter((field) => {
+        const rules = filterRules[field];
+        if (!Array.isArray(rules)) return false;
+        return rules.some(
+            (rule: any) =>
+                rule.rule === 'required' ||
+                rule.rule === '\\kernel\\validation::notEmpty' ||
+                rule.params?.options?.includes('notEmpty')
+        );
+    });
 
     // Combine unique required fields
-    const allRequiredFields = [...new Set([...requiredFields, ...requiredFormFields.map((f: any) => f.name)])];
-    console.log("filteredFormChildrenName", JSON.stringify(filteredFormChildrenName, null, 2));
-    console.log("allRequiredFields", JSON.stringify(allRequiredFields, null, 2))
+    const allRequiredFields = [
+        ...new Set([
+            ...notEmptyFieldKeys.filter((field) => filteredFormChildrenName.includes(field)),
+            ...requiredFormFields.map((f: any) => f.name),
+            ...filterRulesRequiredFields,
+        ]),
+    ];
+
     const filteredRequiredFields = allRequiredFields.filter(field => {
         const fieldName = Array.isArray(field) ? [controller, ...field].join(".") : [controller, field].join(".");
         // console.log("typeof field", typeof field)
         // console.log("fieldName", fieldName);
         return filteredFormChildrenName.includes(fieldName)
     })
-    // console.log("allRequiredFields", allRequiredFields);
-    // console.log("filteredRequiredFields", filteredRequiredFields);
+    // console.log("filteredRequiredFields", JSON.stringify(filteredRequiredFields, null, 2));
 
     // Construct data object with dynamic values
     const data: { [key: string]: any } = {};
@@ -87,52 +98,47 @@ function constructPostPayload(getResponse: any, model: string): any {
         const fieldName = Array.isArray(field) ? [controller, ...field].join(".") : [controller, field].join(".");
         const child = filteredFormChildren.find((f: any) => f.name?.join(".") === fieldName);
         const fieldType = child?.template || (field.includes('_id') ? 'int' : 'varchar');
+        const rules = filterRules[field] || [];
 
-        const isDropdown = ["popup", "select"].includes(fieldType);
-        const isNumber = fieldType === "number";
-        const isDate = fieldType === "date" || (fieldType === "input" && child.method === "date");
-        const isDatetime = fieldType === "input" && child.method === "datetime";
+        const isDropdown = ['popup', 'select'].includes(fieldType);
+        const isNumber = fieldType === 'number' || fieldType.includes('int') || field.includes('_id');
+        const isDate = fieldType === 'date' || (fieldType === 'input' && child?.method === 'date');
+        const isDatetime = fieldType === 'input' && child?.method === 'datetime';
+        const isEmail = rules.some(
+            (rule: any) => rule.rule === '\\kernel\\validation::isValidEmail'
+        );
+        const isPhone = rules.some(
+            (rule: any) => rule.rule === '\\kernel\\validation::isValidPhoneNumber'
+        );
+        const notDuplicate = rules.some(
+            (rule: any) => rule.rule === '\\kernel\\validation::notDuplicate'
+        );
+        const isIntNumber = rules.some(
+            (rule: any) => rule.rule === '\\kernel\\validation::isIntNumber'
+        );
 
-        // dropdown, number field
-        if (isDropdown || isNumber || fieldType.includes('int') || field.includes('_id')) {
+        if (isEmail) {
+            data[field] = `test${field}@example.com`;
+        } else if (isPhone) {
+            data[field] = '+14371234567';
+        } else if (isDropdown || isNumber || isIntNumber) {
             data[field] = 1;
         } else if (isDate) {
-            data[field] = dayjs().format("YYYY-MM-DD");
+            data[field] = dayjs().format('YYYY-MM-DD');
         } else if (isDatetime) {
-            data[field] = dayjs().format("YYYY-MM-DD HH:mm:ss");
-        // text field
-        // } else if (fieldType.includes('varchar') || fieldType.includes('text')) {
-            // data[field] = `Test${field.charAt(0).toUpperCase() + field.slice(1)}`;
-        // else
+            data[field] = dayjs().format('YYYY-MM-DD HH:mm:ss');
+        } else if (notDuplicate) {
+            data[field] = `Test_${field.charAt(0).toUpperCase() + field.slice(1)}_${dayjs().format('YYYY-MM-DD HH:mm:ss')}`;
         } else {
-            data[field] = `Test${field.charAt(0).toUpperCase() + field.slice(1)}`;
-            // data[field] = null; // Safe default
+            data[field] = `Test_${field.charAt(0).toUpperCase() + field.slice(1)}`;
         }
+
+        // // Add related fields if specified
+        // if (formField?.related_to) {
+        //     data[`__${field}`] = `Test${field.charAt(0).toUpperCase() + field.slice(1)}`;
+        //     data[`${field}_model`] = formField.related_to;
+        // }
     });
-
-    // Add related fields if specified in form.children (example logic, adjust based on metadata)
-    // const relatedFields: { [key: string]: { display: string; model: string } } = {};
-    // formChildren.forEach((child: any) => {
-    //     if (child.name && child.related_to && child['not-empty'] === '1') {
-    //         relatedFields[child.name] = { display: `Test${child.name}`, model: child.related_to };
-    //     }
-    //     if (Array.isArray(child.children)) {
-    //         child.children.forEach((subChild: any) => {
-    //             if (subChild.name && subChild.related_to && subChild['not-empty'] === '1') {
-    //                 relatedFields[subChild.name] = { display: `Test${subChild.name}`, model: subChild.related_to };
-    //             }
-    //         });
-    //     }
-    // });
-
-    // console.log(`controller debug: ${controller}`)
-
-    // allRequiredFields.forEach((field) => {
-    //     if (relatedFields[field]) {
-    //         data[`__${field}`] = relatedFields[field].display;
-    //         data[`${field}_model`] = relatedFields[field].model;
-    //     }
-    // });
 
     return {
         jsonrpc: '2.0',
@@ -185,8 +191,8 @@ describe('Add API Response Validation', () => {
                     // GET /add.json
                     const getEndpoint = `/${model}/add.json`;
                     try {
+                        // await new Promise((resolve) => setTimeout(resolve, 1000)); // Avoid rate limits
                         const response = await apiClient.get(getEndpoint);
-                        // console.log(response);
                         getResponseStatus = response.status;
                         getResponseData = response.data;
                         getResponseError = null;
@@ -259,10 +265,9 @@ describe('Add API Response Validation', () => {
 
                     expect(postResponseStatus).toBe(200);
                     const parseResult = PostResponseSchema.safeParse(postResponseData);
-                    // console.log(`[${model}] POST /add schema parse result success:`, parseResult.success);
                     if (!parseResult.success) {
-                        console.error(`postResponseData: ${JSON.stringify(postResponseData, null, 2)}`)
                         console.error(`[${model}] POST /add schema validation errors:`, parseResult.error);
+                        console.error(`postResponseData:`, JSON.stringify(postResponseData, null, 2));
                         throw new Error(`Schema validation failed for ${model}/add POST`);
                     }
                     expect(parseResult.success).toBe(true);
