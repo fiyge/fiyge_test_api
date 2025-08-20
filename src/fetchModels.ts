@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 
 async function fetchModels() {
     const response = await axios.get<{ data: Record<string, { children: Record<string, { url: string; }>; }> }>(
-        "https://api.iai.fiyge.com/development_base/menus/app_menu.json",
+        "https://api.uat.fiyge.com/development_base/menus/app_menu.json",
         {
             headers: {
                 Authorization:
