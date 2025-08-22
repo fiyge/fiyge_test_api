@@ -16,7 +16,7 @@ let apiClient: AxiosInstance;
 
 beforeAll(async () => {
     apiClient = axios.create({
-        baseURL: 'https://api.uat.fiyge.com/',
+        baseURL: 'https://api.iai.fiyge.com/',
         headers: {
             Authorization:
                 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvYXBpLmlhaS5maXlnZS5jb20iLCJpYXQiOjE3NTQ2Nzg1NTIsImV4cCI6MTc1NDY4MjE1MiwibmJmIjoxNzU0Njc4NTUyLCJ1c2VyX2lkIjoiMTEzNiJ9.xxi27lJdCQDdOVRRchPlSVg3y_qwvb2s10QYN7D_AL4',
