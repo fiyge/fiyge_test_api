@@ -1,6 +1,6 @@
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
 import {IndexResponseSchema} from '../schemas/indexSchema.ts';
-import {exceptionModelList} from "../constants.ts";
+import {exceptionModelList, modelList} from "../constants.ts";
 
 // Utility to access nested or flat property in a record
 function getProperty(obj: any, path: string): any {
@@ -48,17 +48,9 @@ beforeAll(async () => {
 });
 
 describe('Index API Response Validation', () => {
-    // @ts-ignore
     it("wait for API to get model list", () => {
 
     })
-
-    const modelList = [
-        'crm/leads',
-        'crm/opportunities',
-        'crm/people',
-        'crm/companies',
-    ]
     modelList
         .filter(model => !exceptionModelList.includes(model))
         // .slice(0, 5)
