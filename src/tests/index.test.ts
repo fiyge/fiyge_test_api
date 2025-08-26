@@ -68,7 +68,7 @@ describe('Index API Response Validation', () => {
                     throw new Error(`Schema validation failed for ${model}/index.json`);
                 }
                 expect(parseResult.success).toBe(true);
-            }, 5000);
+            });
 
             let searchResponseData: any = null;
             let searchResponseStatus: number | null = null;

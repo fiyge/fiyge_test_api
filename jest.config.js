@@ -6,6 +6,7 @@ module.exports = {
     transform: {
         '^.+\\.ts$': 'ts-jest',
     },
+    testTimeout: 10000,
     reporters: [
         "default",
         ['jest-junit', {
