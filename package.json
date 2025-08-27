@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/yargs": "^17.0.33",
     "jest": "^30.0.5",
     "ts-jest": "^29.4.1",
     "tsx": "^4.20.4",
@@ -17,6 +18,9 @@
   "private": true,
   "dependencies": {
     "axios": "^1.11.0",
+    "jest-github-actions-reporter": "^1.0.3",
+    "jest-junit": "^16.0.0",
+    "yargs": "^18.0.0",
     "zod": "^4.0.15"
   }
 }
