@@ -2,6 +2,8 @@ import axios, {AxiosInstance, AxiosResponse} from 'axios';
 import {IndexResponseSchema} from '../schemas/indexSchema.ts';
 import {exceptionModelList, modelList} from "../constants.ts";
 
+const API_URL = process.env.API_URL || 'https://api.uat.fiyge.com/';
+
 // Utility to access nested or flat property in a record
 function getProperty(obj: any, path: string): any {
     // Try flat key first (e.g., "leads.name")
@@ -38,7 +40,7 @@ let apiClient: AxiosInstance;
 beforeAll(async () => {
     // modelList = await getModelList();
     apiClient = axios.create({
-        baseURL: 'https://api.uat.fiyge.com/',
+        baseURL: API_URL,
         headers: {
             Authorization:
                 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvYXBpLmlhaS5maXlnZS5jb20iLCJpYXQiOjE3NTQ2Nzg1NTIsImV4cCI6MTc1NDY4MjE1MiwibmJmIjoxNzU0Njc4NTUyLCJ1c2VyX2lkIjoiMTEzNiJ9.xxi27lJdCQDdOVRRchPlSVg3y_qwvb2s10QYN7D_AL4',
