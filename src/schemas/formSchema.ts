@@ -159,21 +159,17 @@ export const FormSchema = z.object({
 
 export const FormResponseSchema = z.object({
     data: z.record(z.string(), z.union([z.record(z.string(), z.any()), z.number(), z.string()])),
-    filterRules: z.union([z.record(z.string(), z.union([z.object(), z.array(z.object({
-        params: z.union([z.array(z.string()), z.object()]).nullable().optional(),
-        rule: z.union([z.string(), z.number()]).nullable().optional(),
-    }))])), z.array(z.string()).length(0)]),
     errors: z.array(z.string()),
     message: z.array(z.string()),
     primary_key: z.string(),
     display_field: z.string(),
     model: z.string(),
     // model_class: z.string(),
-    id: z.union([z.string(), z.boolean()]).nullable().optional(),  // TODO: why boolean???
+    id: z.string().nullable().optional(),
     is_record_deleted: z.boolean().nullable().optional(),
     permissions: z.union([z.array(z.any()), z.object()]),
     // is_pseudo_design_element: z.number(),
-    name: z.union([z.string(), z.number()]),
+    name: z.string(),
     form: FormSchema,
     // allow_comments: z.number(),
     is_editable: z.number().nullable().optional(),

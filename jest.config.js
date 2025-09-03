@@ -6,4 +6,20 @@ module.exports = {
     transform: {
         '^.+\\.ts$': 'ts-jest',
     },
+    testTimeout: 10000,
+    reporters: [
+        "default",
+        ['jest-junit', {
+            suiteName: 'jest tests',
+            outputDirectory: 'reports',
+            outputName: 'junit.xml',
+            usePathForSuiteName: false,
+            suiteNameTemplate: '{title}',
+            classNameTemplate: '{classname}',
+            titleTemplate: '{title}',
+            addFileAttribute: true
+        }],
+        ['github-actions', {silent: true}],
+        // 'summary',
+    ]
 };

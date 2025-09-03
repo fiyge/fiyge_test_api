@@ -63,6 +63,6 @@ export const exceptionModelList: string[] = [
     "projectivity/tasks/task_tracker",
     "analytics/reports",
     "notifications/notifications",
-    'development_base/modules',
     "development_base/modules/api",
+    // "dashboards/widgets",
 ]
