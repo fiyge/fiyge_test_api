@@ -34,7 +34,7 @@ describe('Add API Response Validation (GET /add.json)', () => {
     //     'crm/companies',
     // ]
     modelList
-        .filter(model => !exceptionModelList.includes(model))
+        // .filter(model => !exceptionModelList.includes(model))
         .forEach((model) => {
         describe(`Model: ${model}`, () => {
             it('should conform to the AddResponse schema', async () => {
