@@ -191,6 +191,7 @@ describe('Add API Response Validation', () => {
                 let postResponseData: any = null;
                 let postResponseStatus: number | null = null;
                 let postResponseError: any = null;
+                let payload: any = null;
 
                 beforeAll(async () => {
                     // GET /add.json
@@ -223,8 +224,7 @@ describe('Add API Response Validation', () => {
                     if (getResponseStatus === 200 && getResponseData) {
                         const postEndpoint = `/${model}/add.json`;
                         const controller = model.split("/")[1];
-                        const payload = constructPostPayload(getResponseData, model, getResponseData?.data?.[controller]);
-                        console.log(`[${model}] POST /add payload:`, JSON.stringify(payload, null, 2));
+                        payload = constructPostPayload(getResponseData, model, getResponseData?.data?.[controller]);
 
                         try {
                             const response = await apiClient.post(postEndpoint, payload);
@@ -310,6 +310,7 @@ describe('Add API Response Validation', () => {
                 it('should not have any errors for POST /add', async () => {
                     const noError = Array.isArray(postResponseData.result.errors) ? postResponseData.result.errors.length === 0 : Object.keys(postResponseData.result.errors).length === 0;
                     if (!noError) {
+                        console.log(`[${model}] POST /add payload:`, JSON.stringify(payload, null, 2));
                         console.error(`POST /add response error, postResponseData.result.errors: ${JSON.stringify(postResponseData.result.errors, null, 2)}`)
                     }
                     expect(noError).toBe(true);
