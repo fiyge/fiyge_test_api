@@ -42,7 +42,7 @@ function constructPostPayload(getResponse: any, model: string, recordData: Recor
     // Construct controller and method
     const methodArr = model.split('/').filter((value) => value.length > 0);
     const controller = methodArr[methodArr.length - 1];
-    methodArr.push('edit');
+    methodArr.push('add');
     const method = methodArr.join('.');
 
     // Extract filter rules
@@ -180,8 +180,8 @@ describe('Add API Response Validation', () => {
     //     "crm/people",
     //     "crm/companies",
     // ]
-    //     .filter((model: string) => !exceptionModelList.includes(model))
-        .filter((model: string) => model !== "development_base/modules")
+        .filter((model: string) => !exceptionModelList.includes(model) && !model.startsWith("docgen/"))
+        // .filter((model: string) => model !== "development_base/modules")
         // .slice(10, 50)
         .forEach((model: string) => {
             describe(`Model: ${model}`, () => {

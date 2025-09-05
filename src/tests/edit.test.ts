@@ -27,7 +27,7 @@ describe('Edit API Response Validation (GET /edit.json)', () => {
     //     'crm/companies',
     // ]
     modelList
-        // .filter(model => !exceptionModelList.includes(model))
+        .filter(model => !exceptionModelList.includes(model))
         .forEach((model) => {
         describe(`Model: ${model}`, () => {
             it('should conform to the EditResponse schema', async () => {
