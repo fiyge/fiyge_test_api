@@ -65,4 +65,6 @@ export const exceptionModelList: string[] = [
     "notifications/notifications",
     "development_base/modules/api",
     // "dashboards/widgets",
+    "development_base/modules",
+    "data_management/imports",
 ]
