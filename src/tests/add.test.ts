@@ -38,16 +38,15 @@ function flattenInfiniteFormChildren(children: any[]): any[] {
 }
 
 // Utility to construct POST payload for a model
-function constructPostPayload(getResponse: any, model: string): any {
+function constructPostPayload(getResponse: any, model: string, recordData: Record<string, any> | undefined): any {
     // Construct controller and method
     const methodArr = model.split('/').filter((value) => value.length > 0);
     const controller = methodArr[methodArr.length - 1];
-    methodArr.push('add');
+    methodArr.push('edit');
     const method = methodArr.join('.');
 
     // Extract filter rules
     const filterRules = getResponse.filterRules || {};
-    // console.log("filterRules: ", JSON.stringify(filterRules, null, 2));
 
     // Extract required fields from notEmptyField
     const notEmptyFields = getResponse.notEmptyField?.[controller] || {};
@@ -57,11 +56,12 @@ function constructPostPayload(getResponse: any, model: string): any {
     const formChildren = getResponse.form?.children || [];
     const requiredFormFields = getRequiredFormFields(formChildren);
     const flattenFormChildren = flattenInfiniteFormChildren(formChildren);
-    const filteredFormChildren = flattenFormChildren.filter((child: { template: any; permission: any; }) => child.template !== undefined && child.template !== null && child.permission !== "1");
-    // console.log("getResponse", getResponse);
-    const filteredFormChildrenName = filteredFormChildren.map((child: { name: any[]; }) => child.name ? child.name.join(".") : "").filter((name: string) => name !== "");
-    // console.log("filteredFormChildrenName", filteredFormChildrenName);
-    // console.log("flattenFormChildren", JSON.stringify(flattenFormChildren, null, 2));
+    const filteredFormChildren = flattenFormChildren.filter(
+        (child: any) => child.template !== undefined && child.template !== null && child.permission !== '1'
+    );
+    const filteredFormChildrenName = filteredFormChildren
+        .map((child: any) => (child.name ? child.name.join('.') : ''))
+        .filter((name: string) => name !== '');
 
     // Extract required fields from filterRules (required or notEmpty)
     const filterRulesRequiredFields = Object.keys(filterRules).filter((field) => {
@@ -84,19 +84,19 @@ function constructPostPayload(getResponse: any, model: string): any {
         ]),
     ];
 
-    const filteredRequiredFields = allRequiredFields.filter(field => {
-        const fieldName = Array.isArray(field) ? [controller, ...field].join(".") : [controller, field].join(".");
-        // console.log("typeof field", typeof field)
-        // console.log("fieldName", fieldName);
-        return filteredFormChildrenName.includes(fieldName)
-    })
-    // console.log("filteredRequiredFields", JSON.stringify(filteredRequiredFields, null, 2));
+    const filteredRequiredFields = allRequiredFields.filter((field) => {
+        const fieldName = Array.isArray(field) ? [controller, ...field].join('.') : [controller, field].join('.');
+        return filteredFormChildrenName.includes(fieldName);
+    });
 
-    // Construct data object with dynamic values
-    const data: { [key: string]: any } = {};
+    // Start with existing record data from getResponse.data[controller]
+    const data: { [key: string]: any } = { ...recordData };
+    delete data["workflow_record_actions"]
+
+    // Add or update required fields
     filteredRequiredFields.forEach((field) => {
-        const fieldName = Array.isArray(field) ? [controller, ...field].join(".") : [controller, field].join(".");
-        const child = filteredFormChildren.find((f: any) => f.name?.join(".") === fieldName);
+        const fieldName = Array.isArray(field) ? [controller, ...field].join('.') : [controller, field].join('.');
+        const child = filteredFormChildren.find((f: any) => f.name?.join('.') === fieldName);
         const fieldType = child?.template || (field.includes('_id') ? 'int' : 'varchar');
         const rules = filterRules[field] || [];
 
@@ -117,34 +117,33 @@ function constructPostPayload(getResponse: any, model: string): any {
             (rule: any) => rule.rule === '\\kernel\\validation::isIntNumber'
         );
 
+        // Update or add field with appropriate value
         if (isEmail) {
-            data[field] = `test${field}@example.com`;
+            data[field] = data[field] ?? `test${field}@example.com`;
         } else if (isPhone) {
-            data[field] = '+14371234567';
+            data[field] = data[field] ?? '+14371234567';
         } else if (isDropdown || isNumber || isIntNumber) {
-            data[field] = 1;
+            data[field] = data[field] ?? 1;
         } else if (isDate) {
-            data[field] = dayjs().format('YYYY-MM-DD');
+            data[field] = data[field] ?? dayjs().format('YYYY-MM-DD');
         } else if (isDatetime) {
-            data[field] = dayjs().format('YYYY-MM-DD HH:mm:ss');
+            data[field] = data[field] ?? dayjs().format('YYYY-MM-DD HH:mm:ss');
         } else if (notDuplicate) {
-            data[field] = `Test_${field.charAt(0).toUpperCase() + field.slice(1)}_${dayjs().format('YYYY-MM-DD HH:mm:ss')}`;
+            data[field] = data[field] ?? `Test_${field.charAt(0).toUpperCase() + field.slice(1)}_${dayjs().format('YYYY-MM-DD HH:mm:ss')}`;
         } else {
-            data[field] = `Test_${field.charAt(0).toUpperCase() + field.slice(1)}`;
+            data[field] = data[field] ?? `Test_${field.charAt(0).toUpperCase() + field.slice(1)}`;
         }
 
-        // // Add related fields if specified
-        // if (formField?.related_to) {
-        //     data[`__${field}`] = `Test${field.charAt(0).toUpperCase() + field.slice(1)}`;
-        //     data[`${field}_model`] = formField.related_to;
+        // Add related fields if specified
+        // if (child?.related_to) {
+        //   data[`__${field}`] = `Test${field.charAt(0).toUpperCase() + field.slice(1)}`;
+        //   data[`${field}_model`] = child.related_to;
         // }
     });
 
-
-
     return {
+        method,
         jsonrpc: '2.0',
-        method: method,
         params: {
             normalized: 1,
             action: {
@@ -181,8 +180,9 @@ describe('Add API Response Validation', () => {
     //     "crm/people",
     //     "crm/companies",
     // ]
-        .filter((model: string) => !exceptionModelList.includes(model))
-        .slice(0, 5)
+    //     .filter((model: string) => !exceptionModelList.includes(model))
+        .filter((model: string) => model !== "development_base/modules")
+        // .slice(10, 50)
         .forEach((model: string) => {
             describe(`Model: ${model}`, () => {
                 let getResponseData: any = null;
@@ -222,7 +222,8 @@ describe('Add API Response Validation', () => {
                     // POST /add
                     if (getResponseStatus === 200 && getResponseData) {
                         const postEndpoint = `/${model}/add.json`;
-                        const payload = constructPostPayload(getResponseData, model);
+                        const controller = model.split("/")[1];
+                        const payload = constructPostPayload(getResponseData, model, getResponseData?.data?.[controller]);
                         console.log(`[${model}] POST /add payload:`, JSON.stringify(payload, null, 2));
 
                         try {
