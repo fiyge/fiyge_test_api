@@ -273,7 +273,7 @@ describe('Add API Response Validation', () => {
                     const parseResult = PostResponseSchema.safeParse(postResponseData);
                     if (!parseResult.success) {
                         console.error(`[${model}] POST /add schema validation errors:`, parseResult.error);
-                        console.error(`postResponseData:`, JSON.stringify(postResponseData, null, 2));
+                        // console.error(`postResponseData:`, JSON.stringify(postResponseData, null, 2));
                         throw new Error(`Schema validation failed for ${model}/add POST`);
                     }
                     expect(parseResult.success).toBe(true);
