@@ -54,7 +54,7 @@ describe('Index API Response Validation', () => {
 
     })
     modelList
-        // .filter(model => !exceptionModelList.includes(model))
+        .filter(model => !exceptionModelList.includes(model))
         // .slice(0, 5)
         .forEach((model) => {
             describe(`Model: ${model}`, () => {

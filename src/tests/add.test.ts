@@ -180,8 +180,8 @@ describe('Add API Response Validation', () => {
     //     "crm/people",
     //     "crm/companies",
     // ]
-    //     .filter((model: string) => !exceptionModelList.includes(model))
-        .filter((model: string) => model !== "development_base/modules")
+        .filter((model: string) => !exceptionModelList.includes(model))
+        // .filter((model: string) => model !== "development_base/modules")
         // .slice(10, 50)
         .forEach((model: string) => {
             describe(`Model: ${model}`, () => {
