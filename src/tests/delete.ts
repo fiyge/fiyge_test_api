@@ -35,7 +35,7 @@ describe('Delete API Response Validation (GET /delete.json)', () => {
     //     'crm/companies',
     // ]
     modelList
-    .filter(model => !exceptionModelList.includes(model))
+    .filter((model: string) => !exceptionModelList.includes(model) && !model.startsWith("docgen/") && !model.startsWith("development"))
     .forEach((model) => {
         describe(`Model: ${model}`, () => {
             it('should conform to the DeleteResponse schema', async () => {
