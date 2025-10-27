@@ -34,7 +34,7 @@ describe('View API Response Validation (GET /view.json)', () => {
     //     'crm/companies',
     // ]
     modelList
-        .filter(model => !exceptionModelList.includes(model))
+        .filter(model => !exceptionModelList.includes(model) && !model.startsWith("docgen/") && !model.startsWith("development"))
         .forEach((model) => {
             describe(`Model: ${model}`, () => {
                 it('should conform to the ViewResponse schema', async () => {

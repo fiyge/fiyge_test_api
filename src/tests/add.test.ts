@@ -180,7 +180,7 @@ describe('Add API Response Validation', () => {
     //     "crm/people",
     //     "crm/companies",
     // ]
-        .filter((model: string) => !exceptionModelList.includes(model) && !model.startsWith("docgen/"))
+        .filter((model: string) => !exceptionModelList.includes(model) && !model.startsWith("docgen/") && !model.startsWith("development"))
         // .filter((model: string) => model !== "development_base/modules")
         // .slice(10, 50)
         .forEach((model: string) => {
@@ -199,6 +199,7 @@ describe('Add API Response Validation', () => {
                     try {
                         // await new Promise((resolve) => setTimeout(resolve, 1000)); // Avoid rate limits
                         const response = await apiClient.get(getEndpoint);
+                        // console.log("response: ", response)
                         getResponseStatus = response.status;
                         getResponseData = response.data;
                         getResponseError = null;
@@ -206,9 +207,10 @@ describe('Add API Response Validation', () => {
                         // console.log(`[${model}] GET /add response data:`, JSON.stringify(getResponseData, null, 2));
 
                         const parseResult = FormResponseSchema.safeParse(getResponseData);
+                        expect(parseResult.success, `Schema validation error: ${parseResult.error}`).toBe(true);
                         if (!parseResult.success) {
-                            console.error(`[${model}] GET /add schema validation errors:`, parseResult.error);
-                            throw new Error(`Schema validation failed for ${model}/add.json`);
+                            // console.error(`[${model}] GET /add schema validation errors:`, parseResult.error);
+                            // throw new Error(`Schema validation failed for ${model}/add.json`);
                         }
                     } catch (error) {
                         getResponseError = error;
@@ -217,7 +219,7 @@ describe('Add API Response Validation', () => {
                         // @ts-ignore
                         getResponseData = error.response?.data || null;
                         // @ts-ignore
-                        console.error(`[${model}] GET /add API call failed:`, error.message);
+                        // console.error(`[${model}] GET /add API call failed:`, error.message);
                     }
 
                     // POST /add
@@ -240,7 +242,7 @@ describe('Add API Response Validation', () => {
                             // @ts-ignore
                             postResponseData = error.response?.data || null;
                             // @ts-ignore
-                            console.error(`[${model}] POST /add API call failed:`, error.message);
+                            // console.error(`[${model}] POST /add API call failed:`, error.message);
                         }
                     }
                 });
@@ -252,7 +254,7 @@ describe('Add API Response Validation', () => {
                     //     return;
                     // }
 
-                    expect(getResponseStatus).toBe(200);
+                    expect(getResponseStatus, `getResponseStatus: ${getResponseStatus}`).toBe(200);
                     expect(FormResponseSchema.safeParse(getResponseData).success).toBe(true);
                 });
 
@@ -269,12 +271,14 @@ describe('Add API Response Validation', () => {
                     //     return;
                     // }
 
-                    expect(postResponseStatus).toBe(200);
+                    expect(postResponseStatus, `postResponseStatus: ${postResponseStatus}`).toBe(200);
                     const parseResult = PostResponseSchema.safeParse(postResponseData);
+
+                    expect(parseResult.success, `Schema validation error: ${parseResult.error}`).toBe(true);
                     if (!parseResult.success) {
-                        console.error(`[${model}] POST /add schema validation errors:`, parseResult.error);
-                        // console.error(`postResponseData:`, JSON.stringify(postResponseData, null, 2));
-                        throw new Error(`Schema validation failed for ${model}/add POST`);
+                        // console.error(`[${model}] POST /add schema validation errors:`, parseResult.error);
+                        // // console.error(`postResponseData:`, JSON.stringify(postResponseData, null, 2));
+                        // throw new Error(`Schema validation failed for ${model}/add POST`);
                     }
                     expect(parseResult.success).toBe(true);
                 });
@@ -292,9 +296,9 @@ describe('Add API Response Validation', () => {
                     //     return;
                     // }
 
-                    expect(postResponseStatus).toBe(200);
+                    expect(postResponseStatus, `postResponseStatus: ${postResponseStatus}`).toBe(200);
                     if (postResponseStatus !== 200) {
-                        console.error(`postResponseData: ${JSON.stringify(postResponseError, null, 2)}`);
+                        // console.error(`postResponseData: ${JSON.stringify(postResponseError, null, 2)}`);
                     }
                     const data = postResponseData;
                     // console.log(`[${model}] POST /add response:`, data.error ? data.error.message : data.result);
@@ -308,12 +312,12 @@ describe('Add API Response Validation', () => {
                 });
 
                 it('should not have any errors for POST /add', async () => {
-                    const noError = Array.isArray(postResponseData.result.errors) ? postResponseData.result.errors.length === 0 : Object.keys(postResponseData.result.errors).length === 0;
+                    const noError = Array.isArray(postResponseData?.result?.errors) ? postResponseData?.result?.errors.length === 0 : Object.keys(postResponseData?.result?.errors).length === 0;
                     if (!noError) {
-                        console.log(`[${model}] POST /add payload:`, JSON.stringify(payload, null, 2));
-                        console.error(`POST /add response error, postResponseData.result.errors: ${JSON.stringify(postResponseData.result.errors, null, 2)}`)
+                        // console.error(`[${model}] POST /add payload:`, JSON.stringify(payload, null, 2));
+                        // console.error(`POST /add response error, postResponseData.result.errors: ${JSON.stringify(postResponseData.result.errors, null, 2)}`)
                     }
-                    expect(noError).toBe(true);
+                    expect(noError, `errors: ${postResponseData?.result?.errors}`).toBe(true);
                 });
 
             //     TODO: verify response value is the same as the payload

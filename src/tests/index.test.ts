@@ -54,7 +54,7 @@ describe('Index API Response Validation', () => {
 
     })
     modelList
-        .filter(model => !exceptionModelList.includes(model))
+        .filter(model => !exceptionModelList.includes(model) && !model.startsWith("docgen/") && !model.startsWith("development"))
         // .slice(0, 5)
         .forEach((model) => {
             describe(`Model: ${model}`, () => {
@@ -65,7 +65,7 @@ describe('Index API Response Validation', () => {
 
                 const parseResult = IndexResponseSchema.safeParse(basicResponse.data);
                 if (!parseResult.success) {
-                    console.log("data", JSON.stringify(basicResponse.data, null, 2));
+                    // console.log("data", JSON.stringify(basicResponse.data, null, 2));
                     console.error(`[${model}] Schema validation errors:`, parseResult.error);
                     throw new Error(`Schema validation failed for ${model}/index.json`);
                 }

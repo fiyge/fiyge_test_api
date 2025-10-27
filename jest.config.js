@@ -21,5 +21,7 @@ module.exports = {
         }],
         ['github-actions', {silent: true}],
         // 'summary',
-    ]
+        "jest-html-reporters",
+    ],
+    setupFilesAfterEnv: ['jest-expect-message'],
 };
