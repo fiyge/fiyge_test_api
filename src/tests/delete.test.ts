@@ -63,7 +63,7 @@ describe('Delete API Response Validation (GET /delete.json)', () => {
                     throw new Error(`Schema validation failed for ${model}/delete.json`);
                 }
                 expect(parseResult.success).toBe(true);
-            }, 50000);
+            }, 10000);
 
             it('should not have any errors for POST /delete', async () => {
                 // console.log("deleteResponseData: ", deleteResponseData)
@@ -73,7 +73,7 @@ describe('Delete API Response Validation (GET /delete.json)', () => {
                     console.error(`POST /add response error, postResponseData.result.errors: ${JSON.stringify(deleteResponseData.errors, null, 2)}`)
                 }
                 expect(noError).toBe(true);
-            }, 50000);
+            }, 10000);
         });
     });
 });
