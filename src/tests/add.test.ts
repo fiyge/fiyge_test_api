@@ -317,7 +317,7 @@ describe('Add API Response Validation', () => {
                         // console.error(`[${model}] POST /add payload:`, JSON.stringify(payload, null, 2));
                         // console.error(`POST /add response error, postResponseData.result.errors: ${JSON.stringify(postResponseData.result.errors, null, 2)}`)
                     }
-                    expect(noError, `errors: ${postResponseData?.result?.errors}`).toBe(true);
+                    expect(noError, `errors: ${JSON.stringify(postResponseData?.result?.errors, null, 2)}`).toBe(true);
                 });
 
             //     TODO: verify response value is the same as the payload
