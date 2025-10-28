@@ -4,6 +4,9 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { IndexResponseSchema } from '../schemas/indexSchema.ts';
 import { exceptionModelList } from '../constants.ts';
 import modelList from '../models.json';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const API_URL = 'https://api.iai.fiyge.com/';
 
@@ -32,13 +35,20 @@ function getSearchValue(basicData: any, model: string): string {
 let apiClient: AxiosInstance;
 
 beforeAll(async () => {
+    const formData = new FormData();
+    formData.append("data[users][user_name]", process.env.USER_NAME ?? "")
+    formData.append("data[users][user_password]", process.env.USER_PASSWORD ?? "")
+    const response = await axios.post(API_URL + "/access_controls/users/login.json", formData)
+
+    const token = response.data.access_token
     apiClient = axios.create({
         baseURL: API_URL,
         headers: {
             Authorization:
-                'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvYXBpLmlhaS5maXlnZS5jb20iLCJpYXQiOjE3NTQ2Nzg1NTIsImV4cCI6MTc1NDY4MjE1MiwibmJmIjoxNzU0Njc4NTUyLCJ1c2VyX2lkIjoiMTEzNiJ9.xxi27lJdCQDdOVRRchPlSVg3y_qwvb2s10QYN7D_AL4',
+                `Bearer ${token}`,
         },
     });
+    return;
 });
 
 describe('Index API Response Validation', () => {

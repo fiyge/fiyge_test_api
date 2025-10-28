@@ -6,6 +6,9 @@ import { PostResponseSchema } from '../schemas/postResponseSchema.ts';
 import { exceptionModelList } from '../constants.ts';
 import modelList from '../models.json'
 import dayjs from 'dayjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Utility to recursively extract required fields from form.children
 function getRequiredFormFields(children: any[], requiredFields: { name: string; template?: string; related_to?: string; permission?: string }[] = []) {
@@ -162,11 +165,17 @@ let apiClient: AxiosInstance;
 const API_URL = process.env.API_URL || 'https://api.uat.fiyge.com/';
 
 beforeAll(async () => {
+    const formData = new FormData();
+    formData.append("data[users][user_name]", process.env.USER_NAME ?? "")
+    formData.append("data[users][user_password]", process.env.USER_PASSWORD ?? "")
+    const response = await axios.post(API_URL + "/access_controls/users/login.json", formData)
+
+    const token = response.data.access_token
     apiClient = axios.create({
         baseURL: API_URL,
         headers: {
             Authorization:
-                'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvYXBpLmlhaS5maXlnZS5jb20iLCJpYXQiOjE3NTUyODM3MzMsImV4cCI6MTc1NTI4NzMzMywibmJmIjoxNzU1MjgzNzMzLCJ1c2VyX2lkIjoiMTEzNiJ9.A5bstdGg4bw2EDRHyWI4I84_QuQUkcjA68I9Pcxv2E0',
+                `Bearer ${token}`,
         },
     });
     return;
