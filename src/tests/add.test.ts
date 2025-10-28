@@ -6,6 +6,9 @@ import { PostResponseSchema } from '../schemas/postResponseSchema.ts';
 import { exceptionModelList } from '../constants.ts';
 import modelList from '../models.json'
 import dayjs from 'dayjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Utility to recursively extract required fields from form.children
 function getRequiredFormFields(children: any[], requiredFields: { name: string; template?: string; related_to?: string; permission?: string }[] = []) {
@@ -162,11 +165,17 @@ let apiClient: AxiosInstance;
 const API_URL = process.env.API_URL || 'https://api.uat.fiyge.com/';
 
 beforeAll(async () => {
+    const formData = new FormData();
+    formData.append("data[users][user_name]", process.env.USER_NAME ?? "")
+    formData.append("data[users][user_password]", process.env.USER_PASSWORD ?? "")
+    const response = await axios.post(API_URL + "/access_controls/users/login.json", formData)
+
+    const token = response.data.access_token
     apiClient = axios.create({
         baseURL: API_URL,
         headers: {
             Authorization:
-                'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvYXBpLmlhaS5maXlnZS5jb20iLCJpYXQiOjE3NTUyODM3MzMsImV4cCI6MTc1NTI4NzMzMywibmJmIjoxNzU1MjgzNzMzLCJ1c2VyX2lkIjoiMTEzNiJ9.A5bstdGg4bw2EDRHyWI4I84_QuQUkcjA68I9Pcxv2E0',
+                `Bearer ${token}`,
         },
     });
     return;
@@ -182,7 +191,7 @@ describe('Add API Response Validation', () => {
     // ]
         .filter((model: string) => !exceptionModelList.includes(model) && !model.startsWith("docgen/") && !model.startsWith("development"))
         // .filter((model: string) => model !== "development_base/modules")
-        // .slice(10, 50)
+        // .slice(0, 5)
         .forEach((model: string) => {
             describe(`Model: ${model}`, () => {
                 let getResponseData: any = null;
@@ -207,7 +216,7 @@ describe('Add API Response Validation', () => {
                         // console.log(`[${model}] GET /add response data:`, JSON.stringify(getResponseData, null, 2));
 
                         const parseResult = FormResponseSchema.safeParse(getResponseData);
-                        expect(parseResult.success, `Schema validation error: ${parseResult.error}`).toBe(true);
+                        expect(parseResult.success, `Schema validation error: ${parseResult.error?.message}`).toBe(true);
                         if (!parseResult.success) {
                             // console.error(`[${model}] GET /add schema validation errors:`, parseResult.error);
                             // throw new Error(`Schema validation failed for ${model}/add.json`);
@@ -255,7 +264,9 @@ describe('Add API Response Validation', () => {
                     // }
 
                     expect(getResponseStatus, `getResponseStatus: ${getResponseStatus}`).toBe(200);
-                    expect(FormResponseSchema.safeParse(getResponseData).success).toBe(true);
+                    const parseResult = FormResponseSchema.safeParse(getResponseData);
+                    expect(parseResult.success, `Schema validation error: ${parseResult.error?.message}`).toBe(true);
+                    // expect(FormResponseSchema.safeParse(getResponseData).success).toBe(true);
                 });
 
                 it('should conform to the PostResponseSchema for POST /add', async () => {
@@ -274,13 +285,13 @@ describe('Add API Response Validation', () => {
                     expect(postResponseStatus, `postResponseStatus: ${postResponseStatus}`).toBe(200);
                     const parseResult = PostResponseSchema.safeParse(postResponseData);
 
-                    expect(parseResult.success, `Schema validation error: ${parseResult.error}`).toBe(true);
-                    if (!parseResult.success) {
+                    expect(parseResult.success, `Schema validation error: ${parseResult.error?.message}`).toBe(true);
+                    // if (!parseResult.success) {
                         // console.error(`[${model}] POST /add schema validation errors:`, parseResult.error);
                         // // console.error(`postResponseData:`, JSON.stringify(postResponseData, null, 2));
                         // throw new Error(`Schema validation failed for ${model}/add POST`);
-                    }
-                    expect(parseResult.success).toBe(true);
+                    // }
+                    // expect(parseResult.success).toBe(true);
                 });
 
                 it('should have a valid errors array or result in POST response', async () => {
@@ -313,11 +324,11 @@ describe('Add API Response Validation', () => {
 
                 it('should not have any errors for POST /add', async () => {
                     const noError = Array.isArray(postResponseData?.result?.errors) ? postResponseData?.result?.errors.length === 0 : Object.keys(postResponseData?.result?.errors).length === 0;
-                    if (!noError) {
+                    // if (!noError) {
                         // console.error(`[${model}] POST /add payload:`, JSON.stringify(payload, null, 2));
                         // console.error(`POST /add response error, postResponseData.result.errors: ${JSON.stringify(postResponseData.result.errors, null, 2)}`)
-                    }
-                    expect(noError, `errors: ${postResponseData?.result?.errors}`).toBe(true);
+                    // }
+                    expect(noError, `errors: ${JSON.stringify(postResponseData?.result?.errors, null, 2)}`).toBe(true);
                 });
 
             //     TODO: verify response value is the same as the payload
