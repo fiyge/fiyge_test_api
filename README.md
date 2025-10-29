@@ -24,8 +24,19 @@ USER_NAME=your_username
 USER_PASSWORD=your_password
 ```
 
+5. run the following command, `npm run fetch-models` will fetch the latest models from the API and create `src/models.json` file.
+```bash
+rm -rf src/models.json
+npm run fetch-models
+```
+
 ## Run all tests
 To run the tests, use the following command:
+
+```bash
+./run-test.sh
+```
+
 
 ```bash
 npm test
@@ -42,5 +53,14 @@ or
 
 ```bash
 npm test add view delete
+```
+
+## Reading test results
+After running the tests, you can find the test results in the `jest_html_reporters.html`. Double-click the file to open it in your default web browser.
+
+## Refetch model list
+```bash
+rm -rf src/models.json
+npm run fetch-models
 ```
 
