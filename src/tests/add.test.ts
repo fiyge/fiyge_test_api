@@ -7,38 +7,9 @@ import { exceptionModelList } from '../constants.ts';
 import modelList from '../models.json'
 import dayjs from 'dayjs';
 import dotenv from 'dotenv';
+import {flattenInfiniteFormChildren, getRequiredFormFields} from "../utils.ts";
 
 dotenv.config();
-
-// Utility to recursively extract required fields from form.children
-function getRequiredFormFields(children: any[], requiredFields: { name: string; template?: string; related_to?: string; permission?: string }[] = []) {
-    children.forEach((child: any) => {
-        if (child['not_empty'] === '1' && child.name) {
-            requiredFields.push({
-                name: child.name,
-                template: child.template || 'varchar',
-                // related_to: child.related_to,
-                permission: child.permission,
-            });
-        }
-        if (Array.isArray(child.children)) {
-            getRequiredFormFields(child.children, requiredFields);
-        }
-    });
-    return requiredFields;
-}
-
-// Utility to recursively flatten form.children
-function flattenInfiniteFormChildren(children: any[]): any[] {
-    const flattened: any[] = [];
-    children.forEach((child: any) => {
-        flattened.push(child);
-        if (Array.isArray(child.children)) {
-            flattened.push(...flattenInfiniteFormChildren(child.children));
-        }
-    });
-    return flattened;
-}
 
 // Utility to construct POST payload for a model
 function constructPostPayload(getResponse: any, model: string, recordData: Record<string, any> | undefined): any {
