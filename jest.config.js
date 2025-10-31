@@ -24,4 +24,5 @@ module.exports = {
         "jest-html-reporters",
     ],
     setupFilesAfterEnv: ['jest-expect-message'],
+    // testSequencer: "./src/CustomSequencer.ts"
 };

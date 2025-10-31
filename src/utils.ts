@@ -129,6 +129,17 @@ export function constructEditPayload(
         }
     });
 
+    console.log("payload: ", {
+        method,
+        jsonrpc: '2.0',
+        params: {
+            normalized: 1,
+            action: { save_continue: 'Save & Continue' },
+            data: JSON.stringify({ [controller]: { ...data, id: recordId } }, null, 2),
+        },
+        id: 1,
+    });
+
     // ----- the only difference: we also send the record id -----
     return {
         method,
